@@ -16,6 +16,8 @@ build/
 .venv/
 venv/
 slprj/
++maglev_rnn_traced/
+
 pip-wheel-metadata/
 *.ipynb_checkpoints
 .DS_Store
