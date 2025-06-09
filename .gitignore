@@ -1,0 +1,94 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.log
+*.sqlite3
+*.db
+*.env
+.env
+.venv/
+venv/
+slprj/
+pip-wheel-metadata/
+*.ipynb_checkpoints
+.DS_Store
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyInstaller
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# mypy
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# MATLAB
+*.asv
+*.m~
+*.mat
+*.fig
+*.mdl.autosave
+*.slxc
+*.slx.original
+*.slx.autosave
+*.mex*
+*.mlappinstall
+*.mltbx
+*.prj
+*.p
+*.mexw64
+*.mexmaci64
+*.mexa64
+*.mexa64
+*.mexa32
+*.mexglx
+
+# Simulink
+*.slxc
+*.slx.autosave
+*.mdl.autosave
+*.sldd
+*.slxp
+*.sfx
+*.sfprj
+*.autosave
+
+# MATLAB Crash Dumps
+matlab_crash_dump.*
+javaclasspath.txt
+java.opts
+pathdef.m
+
+# General
+*.bak
+*.tmp
+*.swp
+*.swo
+Thumbs.db
+ehthumbs.db
+Icon?
