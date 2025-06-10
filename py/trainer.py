@@ -149,9 +149,10 @@ for epoch in epoch_bar:
         states_batch = torch.tensor(states_orig, dtype=torch.float32)
         dV_dt = lyapunov_derivative(states_batch, outputs, P, A, B)
         lyapunov_penalty = torch.mean(torch.relu(dV_dt + 1e-3))
-        loss = loss_mse + 0.1 * lyapunov_penalty  # lambda = 0.1
+        loss = loss_mse + 0.001 * lyapunov_penalty  # lambda = 0.001
         
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         
         epoch_loss += loss.item()

@@ -27,9 +27,9 @@ class MagLevDatasetGenerator:
         self.Kr = np.array([[-1016.25668098860]])
         
         # Parámetros Super-Twisting
-        self.S_aug = np.array([-874.09, -41.846, 0.4125, 4169.2])
-        self.Kue_aug = np.array([-62813, -874.09, 570.22, 0])
-        self.L_smc = 100
+        self.S_aug = 0.1*np.array([-874.09, -41.846, 0.4125, 4169.2])
+        self.Kue_aug = 0.1*np.array([-62813, -874.09, 570.22, 0])
+        self.L_smc = 500
         
         self.dt = 0.001
         
@@ -109,7 +109,7 @@ class MagLevDatasetGenerator:
         z_state = 0.0
         xi = 0.0
         
-        noise = 0.0001 if add_noise else 0.0
+        noise = 0.00001 if add_noise else 0.0
         
         for i in range(n_steps - 1):
             # Estados aumentados
