@@ -18,6 +18,8 @@ Q = diag([100, 1, 0.1]);
 R_lqr = 0.1;
 K = lqr(A, B, Q, R_lqr);
 
+[P, ~, ~] = care(A, B, Q, R_lqr);
+
 %% 3. GANANCIAS DE SEGUIMIENTO
 M = [A, B; C, D];
 N = inv(M) * [zeros(3,1); 1];

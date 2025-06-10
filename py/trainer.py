@@ -6,17 +6,43 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
 from tqdm import tqdm
 
+# 0. LYAP
+P = torch.tensor([
+    [3.5488e4, 948.0, -213.0],
+    [948.0, 25.0, -6.0], 
+    [-213.0, -6.0, 1.0]
+], dtype=torch.float32) # calculada con el lqr implementado
+
+# Matrices del sistema
+m = 0.068
+Ke = 6.53e-5
+R = 10
+L = 0.4125
+g = 9.81
+a0 = 0.007
+i0 = np.sqrt((m * g * a0**2) / Ke)
+
+# Matrices del sistema
+A = np.array([
+    [0, 1, 0],
+    [(Ke*i0**2)/(m*a0**3), 0, -(Ke*i0)/(m*a0**2)],
+    [0, 0, -R/L]
+])
+B = np.array([[0], [0], [1/L]])
+C = np.array([[1, 0, 0]])
+
 # 1. CARGAR DATASET
 print("Cargando dataset...")
+# with open('maglev_rnn_dataset.pkl', 'rb') as f:
 with open('maglev_mixed_dataset.pkl', 'rb') as f:
     data = pickle.load(f)
 
 # 2. PREPARAR DATOS PARA RNN
-def create_sequences(trajectories, controls, references, controller_types, seq_len=20):
+def create_sequences(trajectories, controls, references, seq_len=20):
     """Crea secuencias de entrada y salida para la RNN"""
     X, y = [], []
     
-    for traj, ctrl, ref, ctrl_type in zip(trajectories, controls, references, controller_types):
+    for traj, ctrl, ref in zip(trajectories, controls, references):
         for i in range(seq_len, len(traj)):
             # Entrada: últimos seq_len puntos de [estados + referencia]
             states_seq = traj[i-seq_len:i]  # (seq_len, 3)
@@ -32,7 +58,7 @@ def create_sequences(trajectories, controls, references, controller_types, seq_l
     return np.array(X), np.array(y)
 
 print("Preparando secuencias...")
-X, y = create_sequences(data['trajectories'], data['controls'], data['references'], data['controller_types'])
+X, y = create_sequences(data['trajectories'], data['controls'], data['references'])
 print(f"Shape de entrada: {X.shape}")  # (n_samples, seq_len, 4)
 print(f"Shape de salida: {y.shape}")   # (n_samples,)
 
@@ -57,6 +83,19 @@ X_test = torch.FloatTensor(X_test)
 y_test = torch.FloatTensor(y_test)
 
 print(f"Train: {X_train.shape}, Test: {X_test.shape}")
+
+# 4.5 derivada de Lyapunov
+def lyapunov_derivative(states, controls, P, A, B):
+    # states: (batch, 3), controls: (batch,)
+    A_tensor = torch.tensor(A, dtype=torch.float32)
+    B_tensor = torch.tensor(B.flatten(), dtype=torch.float32)
+    
+    # x_dot = Ax + Bu
+    x_dot = torch.matmul(states, A_tensor.T) + controls.unsqueeze(1) * B_tensor
+    
+    # dV/dt = 2 * x^T * P * x_dot
+    dV_dt = 2 * torch.sum(torch.matmul(states, P) * x_dot, dim=1)
+    return dV_dt
 
 # 5. DEFINIR RNN
 class MagLevRNN(nn.Module):
@@ -99,7 +138,19 @@ for epoch in epoch_bar:
         
         optimizer.zero_grad()
         outputs = model(batch_X)
-        loss = criterion(outputs, batch_y)
+        
+        loss_mse = criterion(outputs, batch_y)
+        # Penalización Lyapunov
+        # Desnormalizar los estados para usar con P original
+        states_batch = batch_X[:, -1, :3]
+        states_orig = scaler_X.inverse_transform(
+            torch.cat([states_batch, torch.zeros(states_batch.shape[0], 1)], dim=1).numpy()
+            )[:, :3]
+        states_batch = torch.tensor(states_orig, dtype=torch.float32)
+        dV_dt = lyapunov_derivative(states_batch, outputs, P, A, B)
+        lyapunov_penalty = torch.mean(torch.relu(dV_dt + 1e-3))
+        loss = loss_mse + 0.1 * lyapunov_penalty  # lambda = 0.1
+        
         loss.backward()
         optimizer.step()
         
